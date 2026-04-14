@@ -1,5 +1,5 @@
-import { Package, AlertTriangle, TrendingDown, ChefHat, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
-import { PRODUCTS, RECENT_PURCHASES, RECIPES } from '../data/mockData';
+import { Package, AlertTriangle, TrendingDown, ChefHat, ShoppingCart, ArrowRight, Sparkles, Leaf } from 'lucide-react';
+import { PRODUCTS, RECENT_PURCHASES, RECIPES, CONSUMPTION_HISTORY, MONTHLY_IMPACT } from '../data/mockData';
 import { StatCard } from '../components/StatCard';
 import { AlertBox } from '../components/AlertBox';
 import { ProductCard } from '../components/ProductCard';
@@ -149,6 +149,45 @@ export function Dashboard({ onNavigate, onNavigateToPantry, onProductClick }: Da
         </div>
         <p className="text-center text-[10px] text-slate-300 mt-2">Tocca per filtrare la dispensa</p>
       </div>
+
+      {/* Report settimanale impatto */}
+      {(() => {
+        const thisMonth = MONTHLY_IMPACT[MONTHLY_IMPACT.length - 1];
+        const weekConsumed = CONSUMPTION_HISTORY.filter(c => !c.wasWasted).length;
+        const weekWasted = CONSUMPTION_HISTORY.filter(c => c.wasWasted).length;
+        return (
+          <button
+            onClick={() => onNavigate('impatto')}
+            className="w-full bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:border-emerald-200 hover:shadow-md active:scale-95 transition-all text-left"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <Leaf size={16} className="text-emerald-600" />
+                </div>
+                <p className="text-sm font-bold text-slate-700">Il tuo impatto</p>
+              </div>
+              <span className="text-xs text-emerald-600 font-semibold flex items-center gap-0.5">
+                Dettagli <ArrowRight size={11} />
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-emerald-50 rounded-xl p-2.5 text-center">
+                <p className="text-lg font-bold text-emerald-600">{weekConsumed}</p>
+                <p className="text-[10px] text-emerald-500 font-medium leading-tight">prodotti usati</p>
+              </div>
+              <div className={`${weekWasted > 0 ? 'bg-red-50' : 'bg-emerald-50'} rounded-xl p-2.5 text-center`}>
+                <p className={`text-lg font-bold ${weekWasted > 0 ? 'text-red-500' : 'text-emerald-600'}`}>{weekWasted}</p>
+                <p className={`text-[10px] font-medium leading-tight ${weekWasted > 0 ? 'text-red-400' : 'text-emerald-500'}`}>sprecati</p>
+              </div>
+              <div className="bg-sky-50 rounded-xl p-2.5 text-center">
+                <p className="text-lg font-bold text-sky-600">€{thisMonth.eurosSaved.toFixed(0)}</p>
+                <p className="text-[10px] text-sky-500 font-medium leading-tight">risparmiati</p>
+              </div>
+            </div>
+          </button>
+        );
+      })()}
 
       {/* Suggerimento smart dinamico */}
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-4 text-white">

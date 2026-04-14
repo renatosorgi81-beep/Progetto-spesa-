@@ -14,7 +14,7 @@ const PAGE_TITLES: Record<PageName, string> = {
   pantry: 'La mia Dispensa',
   expiry: 'Scadenze',
   recipes: 'Ricette Smart',
-  family: 'Famiglia',
+  impatto: 'Il mio Impatto',
   profile: 'Profilo',
 };
 

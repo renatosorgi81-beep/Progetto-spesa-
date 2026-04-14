@@ -1,4 +1,4 @@
-import { Home, Package, Clock, ChefHat, Users, type LucideProps } from 'lucide-react';
+import { Home, Package, Clock, ChefHat, Leaf, type LucideProps } from 'lucide-react';
 import type { FC } from 'react';
 import type { PageName } from '../types';
 
@@ -13,12 +13,12 @@ const tabs: { id: PageName; label: string; Icon: FC<LucideProps> }[] = [
   { id: 'pantry', label: 'Dispensa', Icon: Package },
   { id: 'expiry', label: 'Scadenze', Icon: Clock },
   { id: 'recipes', label: 'Ricette', Icon: ChefHat },
-  { id: 'family', label: 'Famiglia', Icon: Users },
+  { id: 'impatto', label: 'Impatto', Icon: Leaf },
 ];
 
 export function BottomNav({ current, onChange, expiryCount }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-100 z-50 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-100 z-50">
       <div className="max-w-lg mx-auto flex items-center justify-around px-2 h-16">
         {tabs.map(({ id, label, Icon }) => {
           const active = current === id;
@@ -29,9 +29,7 @@ export function BottomNav({ current, onChange, expiryCount }: BottomNavProps) {
               key={id}
               onClick={() => onChange(id)}
               className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
-                active
-                  ? 'text-emerald-600'
-                  : 'text-slate-400 hover:text-slate-600'
+                active ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
               <div className="relative">

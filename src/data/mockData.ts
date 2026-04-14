@@ -1,4 +1,4 @@
-import type { Product, FamilyMember, Recipe, Purchase } from '../types';
+import type { Product, FamilyMember, Recipe, Purchase, ConsumptionRecord, MonthlyImpact, ImpactBadge } from '../types';
 
 // Reference date: today (2026-04-14)
 const today = new Date('2026-04-14');
@@ -492,6 +492,39 @@ export const RECIPES: Recipe[] = [
     tags: ['carne', 'secondo', 'urgente'],
     isUrgent: true,
   },
+];
+
+export const CONSUMPTION_HISTORY: ConsumptionRecord[] = [
+  // Questa settimana
+  { id: 'c1', productId: 'p1', productName: 'Latte Fresco Intero', productEmoji: '🥛', category: 'latticini', date: dateOffset(-1), qtyConsumed: 1, unit: 'bottiglia', wasWasted: false, valueEuros: 1.59, consumedByMember: 'Giulia' },
+  { id: 'c2', productId: 'p2', productName: 'Yogurt alla Fragola', productEmoji: '🍓', category: 'latticini', date: dateOffset(-1), qtyConsumed: 2, unit: 'vasetto', wasWasted: false, valueEuros: 1.60, consumedByMember: 'Sofia' },
+  { id: 'c3', productId: 'p5', productName: 'Petto di Pollo', productEmoji: '🍗', category: 'carne', date: dateOffset(-2), qtyConsumed: 500, unit: 'g', wasWasted: true, valueEuros: 4.50, consumedByMember: 'Marco' },
+  { id: 'c4', productId: 'p6', productName: 'Insalata Mista', productEmoji: '🥗', category: 'verdura', date: dateOffset(-2), qtyConsumed: 1, unit: 'busta', wasWasted: false, valueEuros: 1.99, consumedByMember: 'Giulia' },
+  { id: 'c5', productId: 'p3', productName: 'Uova Fresche', productEmoji: '🥚', category: 'latticini', date: dateOffset(-3), qtyConsumed: 3, unit: 'pz', wasWasted: false, valueEuros: 1.20, consumedByMember: 'Rosa' },
+  { id: 'c6', productId: 'p7', productName: 'Pomodori Ciliegino', productEmoji: '🍅', category: 'verdura', date: dateOffset(-3), qtyConsumed: 180, unit: 'g', wasWasted: false, valueEuros: 0.83, consumedByMember: 'Marco' },
+  // Settimana scorsa
+  { id: 'c7', productId: 'p9', productName: 'Pasta Spaghetti', productEmoji: '🍝', category: 'pasta_riso', date: dateOffset(-7), qtyConsumed: 1, unit: 'pacco', wasWasted: false, valueEuros: 1.25, consumedByMember: 'Rosa' },
+  { id: 'c8', productId: 'p10', productName: 'Riso Carnaroli', productEmoji: '🍚', category: 'pasta_riso', date: dateOffset(-8), qtyConsumed: 350, unit: 'g', wasWasted: false, valueEuros: 1.23, consumedByMember: 'Rosa' },
+  { id: 'c9', productId: 'p11', productName: 'Tonno al Naturale', productEmoji: '🐟', category: 'pesce', date: dateOffset(-9), qtyConsumed: 1, unit: 'lattina', wasWasted: false, valueEuros: 1.40, consumedByMember: 'Marco' },
+  { id: 'c10', productId: 'p19', productName: 'Burro', productEmoji: '🧈', category: 'latticini', date: dateOffset(-10), qtyConsumed: 200, unit: 'g', wasWasted: false, valueEuros: 2.64, consumedByMember: 'Giulia' },
+  { id: 'c11', productId: 'p20', productName: 'Olio EVO', productEmoji: '🫙', category: 'condimenti', date: dateOffset(-11), qtyConsumed: 550, unit: 'ml', wasWasted: false, valueEuros: 6.53, consumedByMember: 'Marco' },
+  { id: 'c12', productId: 'p15', productName: 'Mele Golden', productEmoji: '🍎', category: 'frutta', date: dateOffset(-12), qtyConsumed: 2, unit: 'pz', wasWasted: false, valueEuros: 1.07, consumedByMember: 'Sofia' },
+];
+
+export const MONTHLY_IMPACT: MonthlyImpact[] = [
+  { month: 'Gennaio 2026', shortMonth: 'Gen', consumed: 52, wasted: 5, kgSaved: 1.2, eurosSaved: 8.40, co2Kg: 3.0 },
+  { month: 'Febbraio 2026', shortMonth: 'Feb', consumed: 48, wasted: 4, kgSaved: 1.8, eurosSaved: 11.20, co2Kg: 4.5 },
+  { month: 'Marzo 2026', shortMonth: 'Mar', consumed: 55, wasted: 2, kgSaved: 2.6, eurosSaved: 14.80, co2Kg: 6.5 },
+  { month: 'Aprile 2026', shortMonth: 'Apr', consumed: 47, wasted: 1, kgSaved: 3.2, eurosSaved: 12.40, co2Kg: 8.0 },
+];
+
+export const IMPACT_BADGES: ImpactBadge[] = [
+  { id: 'b1', icon: '🌱', title: 'Prima settimana verde', description: 'Zero sprechi in 7 giorni', earned: true, earnedDate: '2026-01-14' },
+  { id: 'b2', icon: '♻️', title: 'Riciclatore seriale', description: '10 prodotti consumati prima della scadenza', earned: true, earnedDate: '2026-02-01' },
+  { id: 'b3', icon: '🏆', title: 'Campione anti-spreco', description: '€50 di cibo non buttato', earned: true, earnedDate: '2026-03-20' },
+  { id: 'b4', icon: '🌍', title: 'Amico del pianeta', description: '20kg CO₂ risparmiata', earned: false },
+  { id: 'b5', icon: '👨‍👩‍👧‍👦', title: 'Famiglia sostenibile', description: '3 mesi consecutivi sotto la media italiana', earned: false },
+  { id: 'b6', icon: '⭐', title: 'SmartPantry Pro', description: '100 prodotti gestiti senza sprechi', earned: false },
 ];
 
 export const RECENT_PURCHASES: Purchase[] = [

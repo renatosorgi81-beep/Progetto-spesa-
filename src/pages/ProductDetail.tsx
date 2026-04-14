@@ -4,7 +4,7 @@ import type { Product, PageName } from '../types';
 import { ExpiryBadge, daysUntilExpiry } from '../components/ExpiryBadge';
 import { QuantityBar } from '../components/QuantityBar';
 import { LocationBadge } from '../components/LocationBadge';
-import { RECIPES } from '../data/mockData';
+import { RECIPES, CONSUMPTION_HISTORY } from '../data/mockData';
 
 interface ProductDetailProps {
   product: Product;
@@ -159,6 +159,75 @@ export function ProductDetail({ product: initialProduct, onBack, onNavigate, onG
             />
           </div>
         </div>
+
+        {/* Consumo rapido */}
+        {(() => {
+          const consumed = initialProduct.purchasedQty - qty;
+          const consumedPct = initialProduct.purchasedQty > 0
+            ? Math.round((consumed / initialProduct.purchasedQty) * 100)
+            : 0;
+          const daysSincePurchase = Math.max(1, Math.floor(
+            (new Date().getTime() - new Date(product.purchaseDate).getTime()) / (1000 * 60 * 60 * 24)
+          ));
+          const dailyRate = consumed > 0 ? (consumed / daysSincePurchase).toFixed(1) : '0';
+          const daysLeft = qty > 0 && parseFloat(dailyRate) > 0
+            ? Math.floor(qty / parseFloat(dailyRate))
+            : null;
+          const productHistory = CONSUMPTION_HISTORY.filter(c => c.productId === product.id);
+          return (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Consumo</p>
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="bg-emerald-50 rounded-xl p-2.5 text-center">
+                  <p className="text-lg font-bold text-emerald-600">{consumedPct}%</p>
+                  <p className="text-[10px] text-emerald-500 font-medium leading-tight">consumato</p>
+                </div>
+                <div className="bg-sky-50 rounded-xl p-2.5 text-center">
+                  <p className="text-lg font-bold text-sky-600">{dailyRate}</p>
+                  <p className="text-[10px] text-sky-500 font-medium leading-tight">{product.unit}/giorno</p>
+                </div>
+                <div className={`${daysLeft !== null ? 'bg-amber-50' : 'bg-slate-50'} rounded-xl p-2.5 text-center`}>
+                  <p className={`text-lg font-bold ${daysLeft !== null ? 'text-amber-600' : 'text-slate-400'}`}>
+                    {daysLeft !== null ? `~${daysLeft}g` : '—'}
+                  </p>
+                  <p className={`text-[10px] font-medium leading-tight ${daysLeft !== null ? 'text-amber-500' : 'text-slate-400'}`}>
+                    finirà tra
+                  </p>
+                </div>
+              </div>
+              {/* Timeline bar */}
+              <div className="mb-3">
+                <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                  <span>Acquistato {daysSincePurchase}g fa</span>
+                  <span>{consumed} {product.unit} usati</span>
+                </div>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
+                  <div className="h-full bg-emerald-500 rounded-l-full" style={{ width: `${consumedPct}%` }} />
+                  <div className="h-full bg-slate-200 flex-1 rounded-r-full" />
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>0 {product.unit}</span>
+                  <span className="font-medium text-slate-600">{qty} rimasti</span>
+                  <span>{initialProduct.purchasedQty} {product.unit}</span>
+                </div>
+              </div>
+              {productHistory.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-slate-50">
+                  <p className="text-[10px] text-slate-400 mb-1.5">Ultima registrazione</p>
+                  {productHistory.slice(0, 1).map(h => (
+                    <div key={h.id} className="flex items-center gap-2">
+                      <span className="text-lg">{h.productEmoji}</span>
+                      <p className="text-xs text-slate-500">
+                        <strong>{h.consumedByMember}</strong> ha usato {h.qtyConsumed} {h.unit}
+                        {' '}· {new Date(h.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Product info */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">

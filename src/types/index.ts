@@ -26,8 +26,8 @@ export interface Product {
   remainingQty: number;
   unit: string;
   format: string;
-  purchaseDate: string;     // ISO date string
-  expiryDate: string;       // ISO date string
+  purchaseDate: string;
+  expiryDate: string;
   lot: string;
   notes: string;
   price: number;
@@ -55,7 +55,7 @@ export interface Recipe {
   difficulty: 'facile' | 'media' | 'difficile';
   time: string;
   tags: string[];
-  isUrgent: boolean; // prioritized because ingredients expire soon
+  isUrgent: boolean;
 }
 
 export interface Purchase {
@@ -64,7 +64,40 @@ export interface Purchase {
   store: string;
   itemCount: number;
   total: number;
-  products: string[]; // product ids
+  products: string[];
 }
 
-export type PageName = 'dashboard' | 'pantry' | 'expiry' | 'recipes' | 'family' | 'profile';
+export interface ConsumptionRecord {
+  id: string;
+  productId: string;
+  productName: string;
+  productEmoji: string;
+  category: ProductCategory;
+  date: string;
+  qtyConsumed: number;
+  unit: string;
+  wasWasted: boolean;
+  valueEuros: number;
+  consumedByMember: string;
+}
+
+export interface MonthlyImpact {
+  month: string;
+  shortMonth: string;
+  consumed: number;
+  wasted: number;
+  kgSaved: number;
+  eurosSaved: number;
+  co2Kg: number;
+}
+
+export interface ImpactBadge {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  earned: boolean;
+  earnedDate?: string;
+}
+
+export type PageName = 'dashboard' | 'pantry' | 'expiry' | 'recipes' | 'impatto' | 'profile';

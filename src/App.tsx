@@ -5,7 +5,7 @@ import { Pantry } from './pages/Pantry';
 import { ProductDetail } from './pages/ProductDetail';
 import { Expiry } from './pages/Expiry';
 import { Recipes } from './pages/Recipes';
-import { Family } from './pages/Family';
+import { Impact } from './pages/Impact';
 import { Profile } from './pages/Profile';
 import { PRODUCTS } from './data/mockData';
 import type { PageName, Product, ProductLocation } from './types';
@@ -59,11 +59,7 @@ export default function App() {
   }
 
   return (
-    <Layout
-      page={page}
-      onNavigate={handleNavigate}
-      expiryCount={expiryCount}
-    >
+    <Layout page={page} onNavigate={handleNavigate} expiryCount={expiryCount}>
       {page === 'dashboard' && (
         <Dashboard
           onNavigate={handleNavigate}
@@ -72,23 +68,14 @@ export default function App() {
         />
       )}
       {page === 'pantry' && (
-        <Pantry
-          onProductClick={handleProductClick}
-          defaultLocationFilter={pantryFilter}
-        />
+        <Pantry onProductClick={handleProductClick} defaultLocationFilter={pantryFilter} />
       )}
       {page === 'expiry' && (
         <Expiry onProductClick={handleProductClick} onNavigate={handleNavigate} />
       )}
-      {page === 'recipes' && (
-        <Recipes />
-      )}
-      {page === 'family' && (
-        <Family />
-      )}
-      {page === 'profile' && (
-        <Profile />
-      )}
+      {page === 'recipes' && <Recipes />}
+      {page === 'impatto' && <Impact onNavigate={handleNavigate} />}
+      {page === 'profile' && <Profile />}
     </Layout>
   );
 }
