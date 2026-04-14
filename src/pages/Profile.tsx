@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Shield, HelpCircle, LogOut, ChevronRight, Smartphone, Star, Gift, Leaf } from 'lucide-react';
+import { Bell, Shield, HelpCircle, LogOut, ChevronRight, Smartphone, Star, Leaf } from 'lucide-react';
 
 interface SettingRowProps {
   icon: React.ReactNode;
@@ -7,15 +7,12 @@ interface SettingRowProps {
   sublabel?: string;
   value?: string;
   danger?: boolean;
-  onClick?: () => void;
+  comingSoon?: boolean;
 }
 
-function SettingRow({ icon, label, sublabel, value, danger, onClick }: SettingRowProps) {
+function SettingRow({ icon, label, sublabel, value, danger, comingSoon }: SettingRowProps) {
   return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors text-left"
-    >
+    <div className={`flex items-center gap-3 p-4 ${comingSoon ? 'opacity-60' : ''}`}>
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
         danger ? 'bg-red-50' : 'bg-slate-100'
       }`}>
@@ -25,12 +22,16 @@ function SettingRow({ icon, label, sublabel, value, danger, onClick }: SettingRo
         <p className={`text-sm font-medium ${danger ? 'text-red-500' : 'text-slate-700'}`}>{label}</p>
         {sublabel && <p className="text-xs text-slate-400 mt-0.5">{sublabel}</p>}
       </div>
-      {value ? (
+      {comingSoon ? (
+        <span className="text-[10px] bg-slate-100 text-slate-400 px-2 py-1 rounded-full font-medium flex-shrink-0">
+          Prossimamente
+        </span>
+      ) : value ? (
         <span className="text-xs text-slate-400 flex-shrink-0">{value}</span>
       ) : (
         <ChevronRight size={16} className={`flex-shrink-0 ${danger ? 'text-red-300' : 'text-slate-300'}`} />
       )}
-    </button>
+    </div>
   );
 }
 
@@ -77,7 +78,7 @@ export function Profile() {
           </div>
           <div className="flex-1">
             <p className="font-bold text-emerald-800">Punteggio Eco</p>
-            <p className="text-xs text-emerald-600 mt-0.5">Hai evitato €38 di spreco alimentare questo mese</p>
+            <p className="text-xs text-emerald-600 mt-0.5">€38 di spreco alimentare evitato questo mese</p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-emerald-600">87</p>
@@ -92,7 +93,7 @@ export function Profile() {
       {/* Supermercato collegato */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-50">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Supermercato collegato</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Supermercato collegato</p>
         </div>
         <div className="p-4 flex items-center gap-3">
           <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center">
@@ -108,33 +109,29 @@ export function Profile() {
         </div>
       </div>
 
-      {/* Notifications */}
+      {/* Impostazioni */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-50">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Impostazioni</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Impostazioni</p>
         </div>
         <div className="divide-y divide-slate-50">
           <SettingRow
             icon={<Bell size={18} />}
             label="Notifiche scadenze"
-            sublabel="Avvisi 3 giorni prima"
+            sublabel="Avvisi 3 giorni prima della scadenza"
             value="Attive"
           />
           <SettingRow
             icon={<Shield size={18} />}
             label="Privacy e dati"
             sublabel="Gestisci i tuoi dati personali"
-          />
-          <SettingRow
-            icon={<Gift size={18} />}
-            label="Piano SmartPantry Premium"
-            sublabel="Attivo fino al 14/04/2027"
-            value="Premium"
+            comingSoon
           />
           <SettingRow
             icon={<HelpCircle size={18} />}
             label="Supporto e FAQ"
             sublabel="Hai domande? Siamo qui"
+            comingSoon
           />
         </div>
       </div>
@@ -145,13 +142,12 @@ export function Profile() {
           icon={<LogOut size={18} />}
           label="Esci dall'account"
           danger
+          comingSoon
         />
       </div>
 
       {/* Version */}
-      <p className="text-center text-xs text-slate-300">SmartPantry v1.0.0 · MVP Demo</p>
-
-      <div className="h-2" />
+      <p className="text-center text-xs text-slate-300 pb-2">SmartPantry MVP · Demo v1.0</p>
     </div>
   );
 }

@@ -10,6 +10,7 @@ interface ProductDetailProps {
   product: Product;
   onBack: () => void;
   onNavigate: (page: PageName) => void;
+  onGoToPantry: () => void;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -36,7 +37,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-export function ProductDetail({ product: initialProduct, onBack, onNavigate }: ProductDetailProps) {
+export function ProductDetail({ product: initialProduct, onBack, onNavigate, onGoToPantry }: ProductDetailProps) {
   const [qty, setQty] = useState(initialProduct.remainingQty);
   const [note, setNote] = useState(initialProduct.notes);
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -62,13 +63,19 @@ export function ProductDetail({ product: initialProduct, onBack, onNavigate }: P
         <div className="text-6xl">✅</div>
         <h3 className="text-xl font-bold text-slate-800">Prodotto terminato!</h3>
         <p className="text-sm text-slate-500 text-center">
-          {product.name} è stato rimosso dalla tua dispensa digitale.
+          <strong>{product.name}</strong> è stato rimosso dalla tua dispensa digitale.
         </p>
         <button
-          onClick={onBack}
-          className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-600 transition-colors"
+          onClick={onGoToPantry}
+          className="w-full max-w-xs px-6 py-3 bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-600 transition-colors"
         >
           Torna alla dispensa
+        </button>
+        <button
+          onClick={onBack}
+          className="text-sm text-slate-400 underline underline-offset-2"
+        >
+          Annulla
         </button>
       </div>
     );
@@ -232,13 +239,16 @@ export function ProductDetail({ product: initialProduct, onBack, onNavigate }: P
         )}
 
         {/* Actions */}
-        <button
-          onClick={() => setFinished(true)}
-          className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-red-200 text-red-500 font-semibold rounded-xl hover:bg-red-50 transition-colors"
-        >
-          <Trash2 size={18} />
-          Prodotto finito / rimosso
-        </button>
+        <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 space-y-2">
+          <p className="text-xs text-slate-400 text-center mb-3">Hai finito questo prodotto?</p>
+          <button
+            onClick={() => setFinished(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-red-200 text-red-500 font-semibold rounded-xl hover:bg-red-50 active:scale-95 transition-all"
+          >
+            <Trash2 size={16} />
+            Segna come terminato
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { daysUntilExpiry } from '../components/ExpiryBadge';
 
 interface PantryProps {
   onProductClick: (product: Product) => void;
+  defaultLocationFilter?: ProductLocation | 'all';
 }
 
 type SortKey = 'expiry' | 'name' | 'location' | 'quantity';
@@ -40,9 +41,9 @@ const LOCATION_LABELS: Record<ProductLocation, string> = {
   freezer: 'Freezer',
 };
 
-export function Pantry({ onProductClick }: PantryProps) {
+export function Pantry({ onProductClick, defaultLocationFilter = 'all' }: PantryProps) {
   const [query, setQuery] = useState('');
-  const [filterLocation, setFilterLocation] = useState<ProductLocation | 'all'>('all');
+  const [filterLocation, setFilterLocation] = useState<ProductLocation | 'all'>(defaultLocationFilter);
   const [filterStatus, setFilterStatus] = useState<ProductStatus | 'all'>('all');
   const [filterCategory, setFilterCategory] = useState<ProductCategory | 'all'>('all');
   const [sort, setSort] = useState<SortKey>('expiry');
@@ -235,6 +236,18 @@ export function Pantry({ onProductClick }: PantryProps) {
               <X size={12} /> Rimuovi filtri
             </button>
           )}
+        </div>
+      )}
+
+      {/* Active filter pill */}
+      {filterLocation !== 'all' && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-medium flex items-center gap-1">
+            📍 {LOCATION_LABELS[filterLocation]}
+            <button onClick={() => setFilterLocation('all')} className="ml-1">
+              <X size={11} />
+            </button>
+          </span>
         </div>
       )}
 

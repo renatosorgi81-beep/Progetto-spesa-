@@ -86,20 +86,62 @@ function RecipeCard({ recipe, onSelect }: RecipeCardProps) {
 
 interface RecipeDetailProps {
   recipe: Recipe;
+  onBack: () => void;
 }
 
-function RecipeDetail({ recipe }: RecipeDetailProps) {
+function RecipeDetail({ recipe, onBack }: RecipeDetailProps) {
+  const [cooking, setCooking] = useState(false);
   const requiredProducts = PRODUCTS.filter(p => recipe.requiredProductIds.includes(p.id));
   const pct = Math.round((recipe.availableIngredients / recipe.totalIngredients) * 100);
 
+  if (cooking) {
+    return (
+      <div className="px-4 py-8 text-center space-y-4">
+        <div className="text-6xl">{recipe.imageEmoji}</div>
+        <h3 className="text-xl font-bold text-slate-800">Buona cucina! 👨‍🍳</h3>
+        <p className="text-sm text-slate-500">
+          Ricorda di aggiornare le quantità nella dispensa dopo aver usato gli ingredienti.
+        </p>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-left">
+          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-2">Ingredienti da usare</p>
+          <div className="space-y-2">
+            {requiredProducts.map(p => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span>{p.imageEmoji}</span>
+                <span className="text-sm text-slate-700">{p.name}</span>
+                <span className="ml-auto text-xs text-slate-400">{p.remainingQty} {p.unit}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={() => setCooking(false)}
+          className="w-full py-3 border-2 border-slate-200 text-slate-500 font-semibold rounded-2xl hover:bg-slate-50 transition-colors"
+        >
+          Torna alla ricetta
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div>
+      {/* Back button */}
+      <div className="px-4 pt-4">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+        >
+          ← Tutte le ricette
+        </button>
+      </div>
+
       {/* Hero */}
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-4 py-6 text-center">
+      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-4 py-6 mt-3 text-center">
         <div className="text-6xl mb-3">{recipe.imageEmoji}</div>
         <h2 className="text-xl font-bold text-slate-800">{recipe.name}</h2>
         <p className="text-sm text-slate-500 mt-1">{recipe.description}</p>
-        <div className="flex items-center justify-center gap-4 mt-3">
+        <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
           <span className="flex items-center gap-1 text-xs text-slate-500 bg-white px-3 py-1.5 rounded-full shadow-sm">
             <Clock size={12} /> {recipe.time}
           </span>
@@ -119,26 +161,31 @@ function RecipeDetail({ recipe }: RecipeDetailProps) {
               <AlertTriangle size={16} /> Ingredienti in scadenza!
             </p>
             <p className="text-amber-600 text-xs mt-1">
-              Alcuni ingredienti di questa ricetta scadono presto. Preparala oggi!
+              Alcuni ingredienti scadono presto. Preparala oggi per non sprecarli!
             </p>
           </div>
         )}
 
         {/* Availability */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-            Ingredienti disponibili
-          </p>
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Ingredienti disponibili
+            </p>
+            <span className={`text-xs font-bold ${pct === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
+              {recipe.availableIngredients}/{recipe.totalIngredients}
+            </span>
+          </div>
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
             <div
               className={`h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-amber-400'}`}
               style={{ width: `${pct}%` }}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {requiredProducts.map(p => (
               <div key={p.id} className="flex items-center gap-3">
-                <CheckCircle size={15} className="text-emerald-500 flex-shrink-0" />
+                <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
                 <span className="text-xl">{p.imageEmoji}</span>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-slate-700">{p.name}</p>
@@ -147,11 +194,11 @@ function RecipeDetail({ recipe }: RecipeDetailProps) {
               </div>
             ))}
             {recipe.missingIngredients.map(ing => (
-              <div key={ing} className="flex items-center gap-3 opacity-60">
-                <XCircle size={15} className="text-red-400 flex-shrink-0" />
+              <div key={ing} className="flex items-center gap-3">
+                <XCircle size={16} className="text-red-400 flex-shrink-0" />
                 <span className="text-xl">🛒</span>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-500">{ing}</p>
+                  <p className="text-sm font-medium text-slate-400">{ing}</p>
                   <p className="text-xs text-red-400">Da acquistare</p>
                 </div>
               </div>
@@ -169,10 +216,19 @@ function RecipeDetail({ recipe }: RecipeDetailProps) {
         </div>
 
         {/* CTA */}
-        <button className="w-full py-4 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2">
-          <ChefHat size={20} />
-          {pct === 100 ? 'Inizia a cucinare' : 'Aggiungi ingredienti mancanti alla lista'}
-        </button>
+        {pct === 100 ? (
+          <button
+            onClick={() => setCooking(true)}
+            className="w-full py-4 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <ChefHat size={20} /> Inizia a cucinare
+          </button>
+        ) : (
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+            <p className="text-sm font-semibold text-slate-600 mb-1">Mancano {recipe.missingIngredients.length} ingredienti</p>
+            <p className="text-xs text-slate-400">Aggiungili alla prossima spesa per preparare questa ricetta.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -201,7 +257,7 @@ export function Recipes() {
   if (selected) {
     return (
       <div className="pb-6">
-        <RecipeDetail recipe={selected} />
+        <RecipeDetail recipe={selected} onBack={() => setSelected(null)} />
       </div>
     );
   }
