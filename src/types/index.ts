@@ -54,8 +54,23 @@ export interface Recipe {
   requiredProductIds: string[];
   difficulty: 'facile' | 'media' | 'difficile';
   time: string;
+  servings: number;
   tags: string[];
   isUrgent: boolean;
+  steps: string[];
+  tip?: string;
+}
+
+export interface ShoppingItem {
+  id: string;
+  name: string;
+  emoji: string;
+  category: ProductCategory;
+  qty: string;
+  addedBy: string;
+  addedAt: string;
+  purchased: boolean;
+  note?: string;
 }
 
 export interface Purchase {
@@ -100,4 +115,4 @@ export interface ImpactBadge {
   earnedDate?: string;
 }
 
-export type PageName = 'dashboard' | 'pantry' | 'expiry' | 'recipes' | 'impatto' | 'profile';
+export type PageName = 'dashboard' | 'pantry' | 'expiry' | 'recipes' | 'impatto' | 'spesa' | 'profile';

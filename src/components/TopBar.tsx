@@ -1,4 +1,4 @@
-import { Bell, ChevronLeft } from 'lucide-react';
+import { Bell, ChevronLeft, ShoppingCart } from 'lucide-react';
 import type { PageName } from '../types';
 
 interface TopBarProps {
@@ -7,6 +7,8 @@ interface TopBarProps {
   title?: string;
   onProfile?: () => void;
   alertCount?: number;
+  cartCount?: number;
+  onCartClick?: () => void;
 }
 
 const PAGE_TITLES: Record<PageName, string> = {
@@ -15,10 +17,19 @@ const PAGE_TITLES: Record<PageName, string> = {
   expiry: 'Scadenze',
   recipes: 'Ricette Smart',
   impatto: 'Il mio Impatto',
+  spesa: 'Lista della Spesa',
   profile: 'Profilo',
 };
 
-export function TopBar({ page, onBack, title, onProfile, alertCount = 0 }: TopBarProps) {
+export function TopBar({
+  page,
+  onBack,
+  title,
+  onProfile,
+  alertCount = 0,
+  cartCount = 0,
+  onCartClick,
+}: TopBarProps) {
   const displayTitle = title ?? PAGE_TITLES[page];
 
   return (
@@ -44,6 +55,17 @@ export function TopBar({ page, onBack, title, onProfile, alertCount = 0 }: TopBa
             <Bell size={18} className="text-slate-600" />
             {alertCount > 0 && (
               <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+            )}
+          </button>
+          <button
+            onClick={onCartClick}
+            className="relative w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+          >
+            <ShoppingCart size={18} className="text-slate-600" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-emerald-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                {cartCount}
+              </span>
             )}
           </button>
           <button

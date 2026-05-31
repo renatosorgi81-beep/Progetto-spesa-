@@ -10,9 +10,11 @@ interface LayoutProps {
   expiryCount: number;
   onBack?: () => void;
   pageTitle?: string;
+  cartCount?: number;
+  onCartClick?: () => void;
 }
 
-export function Layout({ children, page, onNavigate, expiryCount, onBack, pageTitle }: LayoutProps) {
+export function Layout({ children, page, onNavigate, expiryCount, onBack, pageTitle, cartCount, onCartClick }: LayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <TopBar
@@ -21,6 +23,8 @@ export function Layout({ children, page, onNavigate, expiryCount, onBack, pageTi
         title={pageTitle}
         onProfile={() => onNavigate('profile')}
         alertCount={expiryCount}
+        cartCount={cartCount}
+        onCartClick={onCartClick}
       />
       <main className="flex-1 max-w-lg mx-auto w-full pb-20 overflow-y-auto">
         {children}

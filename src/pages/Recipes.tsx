@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Clock, ChefHat, AlertTriangle, CheckCircle, XCircle, Users } from 'lucide-react';
 import { RECIPES, PRODUCTS } from '../data/mockData';
-import type { Recipe } from '../types';
+import type { Recipe, Product } from '../types';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -84,6 +84,143 @@ function RecipeCard({ recipe, onSelect }: RecipeCardProps) {
   );
 }
 
+interface CookingViewProps {
+  recipe: Recipe;
+  requiredProducts: Product[];
+  onBack: () => void;
+}
+
+function CookingView({ recipe, requiredProducts, onBack }: CookingViewProps) {
+  const [step, setStep] = useState(0);
+  const totalSteps = recipe.steps.length;
+  const isDone = step >= totalSteps;
+
+  if (isDone) {
+    return (
+      <div className="px-4 py-8 text-center space-y-5">
+        <div className="text-7xl">🎉</div>
+        <h3 className="text-xl font-bold text-slate-800">Complimenti! Hai cucinato!</h3>
+        {recipe.tip && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+            <p className="text-amber-700 text-sm font-semibold mb-1">💡 Consiglio dello chef</p>
+            <p className="text-amber-600 text-sm">{recipe.tip}</p>
+          </div>
+        )}
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-left">
+          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-3">
+            Ingredienti usati
+          </p>
+          <div className="space-y-2">
+            {requiredProducts.map(p => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span>{p.imageEmoji}</span>
+                <span className="text-sm text-slate-700">{p.name}</span>
+                <span className="ml-auto text-xs text-slate-400">
+                  {p.remainingQty} {p.unit}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-sm text-slate-500">
+          Ricorda di aggiornare le quantità nella dispensa!
+        </p>
+        <button
+          onClick={onBack}
+          className="w-full py-3.5 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-colors"
+        >
+          Torna alla ricetta
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-5 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+        >
+          ← Torna alla ricetta
+        </button>
+        <span className="text-xs font-semibold text-slate-400">
+          Passo {step + 1} di {totalSteps}
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+          style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+        />
+      </div>
+
+      {/* Recipe title */}
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">{recipe.imageEmoji}</span>
+        <div>
+          <p className="font-bold text-slate-800">{recipe.name}</p>
+          <p className="text-xs text-slate-400">{recipe.time} · {recipe.difficulty}</p>
+        </div>
+      </div>
+
+      {/* Step card */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 bg-emerald-500 text-white rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0">
+            {step + 1}
+          </div>
+          <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+            {step === 0 ? 'Iniziamo!' : step === totalSteps - 1 ? 'Ultimo passo!' : `Step ${step + 1}`}
+          </p>
+        </div>
+        <p className="text-slate-800 leading-relaxed text-base">{recipe.steps[step]}</p>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex gap-3">
+        {step > 0 && (
+          <button
+            onClick={() => setStep(s => s - 1)}
+            className="flex-1 py-3 border-2 border-slate-200 text-slate-600 font-semibold rounded-2xl hover:bg-slate-50 transition-colors"
+          >
+            ← Indietro
+          </button>
+        )}
+        <button
+          onClick={() => setStep(s => s + 1)}
+          className={`py-3 font-bold rounded-2xl transition-colors ${
+            step === 0 ? 'w-full' : 'flex-1'
+          } bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95`}
+        >
+          {step === totalSteps - 1 ? '🎉 Fatto!' : 'Avanti →'}
+        </button>
+      </div>
+
+      {/* Ingredients reminder */}
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+          Ingredienti per questa ricetta
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {requiredProducts.map(p => (
+            <span
+              key={p.id}
+              className="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-3 py-1"
+            >
+              <span className="text-sm">{p.imageEmoji}</span>
+              <span className="text-xs text-slate-600">{p.name}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface RecipeDetailProps {
   recipe: Recipe;
   onBack: () => void;
@@ -95,33 +232,7 @@ function RecipeDetail({ recipe, onBack }: RecipeDetailProps) {
   const pct = Math.round((recipe.availableIngredients / recipe.totalIngredients) * 100);
 
   if (cooking) {
-    return (
-      <div className="px-4 py-8 text-center space-y-4">
-        <div className="text-6xl">{recipe.imageEmoji}</div>
-        <h3 className="text-xl font-bold text-slate-800">Buona cucina! 👨‍🍳</h3>
-        <p className="text-sm text-slate-500">
-          Ricorda di aggiornare le quantità nella dispensa dopo aver usato gli ingredienti.
-        </p>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-left">
-          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-2">Ingredienti da usare</p>
-          <div className="space-y-2">
-            {requiredProducts.map(p => (
-              <div key={p.id} className="flex items-center gap-2">
-                <span>{p.imageEmoji}</span>
-                <span className="text-sm text-slate-700">{p.name}</span>
-                <span className="ml-auto text-xs text-slate-400">{p.remainingQty} {p.unit}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <button
-          onClick={() => setCooking(false)}
-          className="w-full py-3 border-2 border-slate-200 text-slate-500 font-semibold rounded-2xl hover:bg-slate-50 transition-colors"
-        >
-          Torna alla ricetta
-        </button>
-      </div>
-    );
+    return <CookingView recipe={recipe} requiredProducts={requiredProducts} onBack={() => setCooking(false)} />;
   }
 
   return (
