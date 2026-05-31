@@ -6,30 +6,19 @@ import type { PageName } from '../types';
 interface LayoutProps {
   children: React.ReactNode;
   page: PageName;
-  onNavigate: (page: PageName) => void;
-  expiryCount: number;
-  onBack?: () => void;
-  pageTitle?: string;
-  cartCount?: number;
-  onCartClick?: () => void;
+  onNavigate: (p: PageName) => void;
+  expiryUrgent?: number;
+  cartPending?: number;
 }
 
-export function Layout({ children, page, onNavigate, expiryCount, onBack, pageTitle, cartCount, onCartClick }: LayoutProps) {
+export function Layout({ children, page, onNavigate, expiryUrgent, cartPending }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <TopBar
-        page={page}
-        onBack={onBack}
-        title={pageTitle}
-        onProfile={() => onNavigate('profile')}
-        alertCount={expiryCount}
-        cartCount={cartCount}
-        onCartClick={onCartClick}
-      />
-      <main className="flex-1 max-w-lg mx-auto w-full pb-20 overflow-y-auto">
+    <div className="min-h-screen bg-slate-50 flex flex-col max-w-lg mx-auto">
+      <TopBar page={page} />
+      <main className="flex-1 overflow-y-auto pb-20">
         {children}
       </main>
-      <BottomNav current={page} onChange={onNavigate} expiryCount={expiryCount} />
+      <BottomNav current={page} onChange={onNavigate} expiryUrgent={expiryUrgent} cartPending={cartPending} />
     </div>
   );
 }

@@ -1,49 +1,48 @@
-import { Home, Package, Clock, ChefHat, Leaf, type LucideProps } from 'lucide-react';
-import type { FC } from 'react';
+import { Package, Clock, ShoppingCart } from 'lucide-react';
 import type { PageName } from '../types';
 
 interface BottomNavProps {
   current: PageName;
-  onChange: (page: PageName) => void;
-  expiryCount: number;
+  onChange: (p: PageName) => void;
+  expiryUrgent?: number;
+  cartPending?: number;
 }
 
-const tabs: { id: PageName; label: string; Icon: FC<LucideProps> }[] = [
-  { id: 'dashboard', label: 'Home', Icon: Home },
-  { id: 'pantry', label: 'Dispensa', Icon: Package },
-  { id: 'expiry', label: 'Scadenze', Icon: Clock },
-  { id: 'recipes', label: 'Ricette', Icon: ChefHat },
-  { id: 'impatto', label: 'Impatto', Icon: Leaf },
+const TABS: { id: PageName; label: string; Icon: typeof Package }[] = [
+  { id: 'dispensa', label: 'Dispensa', Icon: Package },
+  { id: 'scadenze', label: 'Scadenze', Icon: Clock },
+  { id: 'spesa', label: 'Lista Spesa', Icon: ShoppingCart },
 ];
 
-export function BottomNav({ current, onChange, expiryCount }: BottomNavProps) {
+export function BottomNav({ current, onChange, expiryUrgent = 0, cartPending = 0 }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-100 z-50">
-      <div className="max-w-lg mx-auto flex items-center justify-around px-2 h-16">
-        {tabs.map(({ id, label, Icon }) => {
+    <nav className="fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-100 safe-bottom">
+      <div className="max-w-lg mx-auto flex">
+        {TABS.map(({ id, label, Icon }) => {
           const active = current === id;
-          const showBadge = id === 'expiry' && expiryCount > 0;
-
+          const badge = id === 'scadenze' ? expiryUrgent : id === 'spesa' ? cartPending : 0;
           return (
             <button
               key={id}
               onClick={() => onChange(id)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
-                active ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
+              className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors relative ${
+                active ? 'text-emerald-600' : 'text-slate-400'
               }`}
             >
               <div className="relative">
-                <Icon size={22} strokeWidth={active ? 2.2 : 1.8} />
-                {showBadge && (
-                  <span className="absolute -top-1 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold">
-                    {expiryCount > 9 ? '9+' : expiryCount}
+                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                {badge > 0 && (
+                  <span className="absolute -top-1 -right-2 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                    {badge > 9 ? '9+' : badge}
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] font-medium leading-none ${active ? 'text-emerald-600' : ''}`}>
+              <span className={`text-[10px] font-semibold ${active ? 'text-emerald-600' : 'text-slate-400'}`}>
                 {label}
               </span>
-              {active && <span className="w-1 h-1 bg-emerald-500 rounded-full" />}
+              {active && (
+                <span className="absolute top-0 inset-x-1/4 h-0.5 bg-emerald-500 rounded-full" />
+              )}
             </button>
           );
         })}
