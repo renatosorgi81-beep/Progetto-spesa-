@@ -20,6 +20,8 @@ const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
   { value: 'conserve', label: 'Conserve' },
   { value: 'bevande', label: 'Bevande' },
   { value: 'dolci', label: 'Dolci' },
+  { value: 'surgelati', label: 'Surgelati' },
+  { value: 'salumi', label: 'Salumi' },
   { value: 'condimenti', label: 'Condimenti' },
 ];
 
@@ -33,7 +35,7 @@ function AddItemForm({ onAdd, onClose }: AddItemFormProps) {
   const [emoji, setEmoji] = useState('🛒');
   const [qty, setQty] = useState('');
   const [category, setCategory] = useState<ProductCategory>('verdura');
-  const [addedBy, setAddedBy] = useState(FAMILY_MEMBERS[0].name);
+  const [addedBy, setAddedBy] = useState(FAMILY_MEMBERS[0]?.name ?? 'Marco');
   const [note, setNote] = useState('');
 
   function handleSubmit() {

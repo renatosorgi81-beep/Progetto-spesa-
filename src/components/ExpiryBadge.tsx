@@ -57,3 +57,16 @@ export function ExpiryBadge({ status, expiryDate, size = 'md' }: ExpiryBadgeProp
 }
 
 export { daysUntilExpiry };
+
+export function computeProductStatus(
+  expiryDate: string,
+  remainingQty: number,
+  purchasedQty: number,
+): import('../types').ProductStatus {
+  const days = daysUntilExpiry(expiryDate);
+  if (days < 0) return 'scaduto';
+  if (days <= 3) return 'in_scadenza';
+  const ratio = purchasedQty > 0 ? remainingQty / purchasedQty : 1;
+  if (ratio <= 0.2) return 'quasi_finito';
+  return 'ok';
+}

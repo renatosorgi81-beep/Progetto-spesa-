@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { PRODUCTS } from '../data/mockData';
+import { Search, SlidersHorizontal, X, Receipt } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import type { Product, ProductCategory, ProductLocation, ProductStatus } from '../types';
 import { daysUntilExpiry } from '../components/ExpiryBadge';
@@ -8,6 +7,8 @@ import { daysUntilExpiry } from '../components/ExpiryBadge';
 interface PantryProps {
   onProductClick: (product: Product) => void;
   defaultLocationFilter?: ProductLocation | 'all';
+  products: Product[];
+  onOpenScanner: () => void;
 }
 
 type SortKey = 'expiry' | 'name' | 'location' | 'quantity';
@@ -41,7 +42,7 @@ const LOCATION_LABELS: Record<ProductLocation, string> = {
   freezer: 'Freezer',
 };
 
-export function Pantry({ onProductClick, defaultLocationFilter = 'all' }: PantryProps) {
+export function Pantry({ onProductClick, defaultLocationFilter = 'all', products, onOpenScanner }: PantryProps) {
   const [query, setQuery] = useState('');
   const [filterLocation, setFilterLocation] = useState<ProductLocation | 'all'>(defaultLocationFilter);
   const [filterStatus, setFilterStatus] = useState<ProductStatus | 'all'>('all');
@@ -50,12 +51,12 @@ export function Pantry({ onProductClick, defaultLocationFilter = 'all' }: Pantry
   const [showFilters, setShowFilters] = useState(false);
 
   const categories = useMemo(() => {
-    const cats = new Set(PRODUCTS.map(p => p.category));
+    const cats = new Set(products.map(p => p.category));
     return Array.from(cats) as ProductCategory[];
-  }, []);
+  }, [products]);
 
   const filtered = useMemo(() => {
-    let list = [...PRODUCTS];
+    let list = [...products];
 
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -83,7 +84,7 @@ export function Pantry({ onProductClick, defaultLocationFilter = 'all' }: Pantry
     });
 
     return list;
-  }, [query, filterLocation, filterStatus, filterCategory, sort]);
+  }, [query, filterLocation, filterStatus, filterCategory, sort, products]);
 
   const activeFiltersCount = [
     filterLocation !== 'all',
@@ -99,6 +100,21 @@ export function Pantry({ onProductClick, defaultLocationFilter = 'all' }: Pantry
 
   return (
     <div className="px-4 py-4 space-y-4">
+
+      {/* Scanner banner */}
+      <button
+        onClick={onOpenScanner}
+        className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl hover:border-emerald-300 hover:shadow-sm transition-all text-left"
+      >
+        <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Receipt size={18} className="text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold text-emerald-700">Scansiona scontrino</p>
+          <p className="text-xs text-emerald-500">Aggiungi prodotti dal tuo scontrino con OCR</p>
+        </div>
+        <span className="text-emerald-400 text-lg">→</span>
+      </button>
 
       {/* Search */}
       <div className="flex gap-2">

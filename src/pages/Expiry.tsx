@@ -1,5 +1,4 @@
 import React from 'react';
-import { PRODUCTS } from '../data/mockData';
 import { daysUntilExpiry } from '../components/ExpiryBadge';
 import { ProductCard } from '../components/ProductCard';
 import type { Product, PageName } from '../types';
@@ -8,6 +7,7 @@ import { ChefHat, AlertTriangle, CheckCircle } from 'lucide-react';
 interface ExpiryProps {
   onProductClick: (product: Product) => void;
   onNavigate: (page: PageName) => void;
+  products: Product[];
 }
 
 function SectionHeader({ icon, title, count, color }: {
@@ -25,24 +25,24 @@ function SectionHeader({ icon, title, count, color }: {
   );
 }
 
-export function Expiry({ onProductClick, onNavigate }: ExpiryProps) {
-  const expired = PRODUCTS.filter(p => p.status === 'scaduto')
+export function Expiry({ onProductClick, onNavigate, products }: ExpiryProps) {
+  const expired = products.filter(p => p.status === 'scaduto')
     .sort((a, b) => daysUntilExpiry(a.expiryDate) - daysUntilExpiry(b.expiryDate));
 
-  const today = PRODUCTS.filter(p => p.status !== 'scaduto' && daysUntilExpiry(p.expiryDate) === 0)
+  const today = products.filter(p => p.status !== 'scaduto' && daysUntilExpiry(p.expiryDate) === 0)
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const within3 = PRODUCTS.filter(p => {
+  const within3 = products.filter(p => {
     const d = daysUntilExpiry(p.expiryDate);
     return d >= 1 && d <= 3;
   }).sort((a, b) => daysUntilExpiry(a.expiryDate) - daysUntilExpiry(b.expiryDate));
 
-  const within7 = PRODUCTS.filter(p => {
+  const within7 = products.filter(p => {
     const d = daysUntilExpiry(p.expiryDate);
     return d >= 4 && d <= 7;
   }).sort((a, b) => daysUntilExpiry(a.expiryDate) - daysUntilExpiry(b.expiryDate));
 
-  const ok = PRODUCTS.filter(p => {
+  const ok = products.filter(p => {
     const d = daysUntilExpiry(p.expiryDate);
     return d > 7;
   }).sort((a, b) => daysUntilExpiry(a.expiryDate) - daysUntilExpiry(b.expiryDate));

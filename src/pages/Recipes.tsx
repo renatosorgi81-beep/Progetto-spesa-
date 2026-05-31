@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Clock, ChefHat, AlertTriangle, CheckCircle, XCircle, Users } from 'lucide-react';
-import { RECIPES, PRODUCTS } from '../data/mockData';
+import { RECIPES } from '../data/mockData';
 import type { Recipe, Product } from '../types';
 
 interface RecipeCardProps {
@@ -224,11 +224,12 @@ function CookingView({ recipe, requiredProducts, onBack }: CookingViewProps) {
 interface RecipeDetailProps {
   recipe: Recipe;
   onBack: () => void;
+  products: Product[];
 }
 
-function RecipeDetail({ recipe, onBack }: RecipeDetailProps) {
+function RecipeDetail({ recipe, onBack, products }: RecipeDetailProps) {
   const [cooking, setCooking] = useState(false);
-  const requiredProducts = PRODUCTS.filter(p => recipe.requiredProductIds.includes(p.id));
+  const requiredProducts = products.filter(p => recipe.requiredProductIds.includes(p.id));
   const pct = Math.round((recipe.availableIngredients / recipe.totalIngredients) * 100);
 
   if (cooking) {
@@ -345,7 +346,11 @@ function RecipeDetail({ recipe, onBack }: RecipeDetailProps) {
   );
 }
 
-export function Recipes() {
+interface RecipesProps {
+  products: Product[];
+}
+
+export function Recipes({ products }: RecipesProps) {
   const [selected, setSelected] = useState<Recipe | null>(null);
   const [filter, setFilter] = useState<'all' | 'ready' | 'urgent'>('all');
 
@@ -368,7 +373,7 @@ export function Recipes() {
   if (selected) {
     return (
       <div className="pb-6">
-        <RecipeDetail recipe={selected} onBack={() => setSelected(null)} />
+        <RecipeDetail recipe={selected} onBack={() => setSelected(null)} products={products} />
       </div>
     );
   }

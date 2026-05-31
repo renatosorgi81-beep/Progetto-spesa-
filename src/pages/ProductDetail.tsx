@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Minus, Plus, Trash2, StickyNote, ChefHat, Calendar, Tag, Hash, MapPin, ShoppingBag, ChevronRight } from 'lucide-react';
+import { Minus, Plus, Trash2, StickyNote, ChefHat, Calendar, Tag, Hash, MapPin, ShoppingBag, ChevronRight, Pencil, Check } from 'lucide-react';
 import type { Product, PageName } from '../types';
-import { ExpiryBadge, daysUntilExpiry } from '../components/ExpiryBadge';
+import { ExpiryBadge, daysUntilExpiry, computeProductStatus } from '../components/ExpiryBadge';
 import { QuantityBar } from '../components/QuantityBar';
 import { LocationBadge } from '../components/LocationBadge';
 import { RECIPES, CONSUMPTION_HISTORY } from '../data/mockData';
@@ -11,6 +11,7 @@ interface ProductDetailProps {
   onBack: () => void;
   onNavigate: (page: PageName) => void;
   onGoToPantry: () => void;
+  onUpdateProduct?: (p: Product) => void;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -37,14 +38,31 @@ function formatDate(dateStr: string) {
   });
 }
 
-export function ProductDetail({ product: initialProduct, onBack, onNavigate, onGoToPantry }: ProductDetailProps) {
+export function ProductDetail({ product: initialProduct, onBack, onNavigate, onGoToPantry, onUpdateProduct }: ProductDetailProps) {
   const [qty, setQty] = useState(initialProduct.remainingQty);
   const [note, setNote] = useState(initialProduct.notes);
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [editingExpiry, setEditingExpiry] = useState(false);
+  const [expiryDate, setExpiryDate] = useState(initialProduct.expiryDate);
 
-  const product = { ...initialProduct, remainingQty: qty };
+  const product = { ...initialProduct, remainingQty: qty, expiryDate };
   const days = daysUntilExpiry(product.expiryDate);
+
+  function saveExpiry(newDate: string) {
+    setExpiryDate(newDate);
+    setEditingExpiry(false);
+    if (onUpdateProduct) {
+      const newStatus = computeProductStatus(newDate, qty, initialProduct.purchasedQty);
+      onUpdateProduct({ ...initialProduct, expiryDate: newDate, remainingQty: qty, status: newStatus });
+    }
+  }
+
+  function defaultExpiryValue() {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split('T')[0];
+  }
 
   // Recipes that use this product
   const relatedRecipes = RECIPES.filter(r => r.requiredProductIds.includes(product.id));
@@ -237,7 +255,45 @@ export function ProductDetail({ product: initialProduct, onBack, onNavigate, onG
             <InfoRow icon={<ShoppingBag size={15} />} label="Formato" value={product.format} />
             <InfoRow icon={<MapPin size={15} />} label="Conservazione" value={product.location.charAt(0).toUpperCase() + product.location.slice(1)} />
             <InfoRow icon={<Calendar size={15} />} label="Acquistato il" value={formatDate(product.purchaseDate)} />
-            <InfoRow icon={<Calendar size={15} />} label="Scade il" value={formatDate(product.expiryDate)} highlight={product.status === 'scaduto' || product.status === 'in_scadenza'} />
+
+            {/* Editable expiry date */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-400">
+                <Calendar size={15} />
+                <span className="text-sm">Scade il</span>
+              </div>
+              {editingExpiry ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    defaultValue={expiryDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="text-sm border border-emerald-300 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-200"
+                    onBlur={e => saveExpiry(e.target.value || defaultExpiryValue())}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveExpiry((e.target as HTMLInputElement).value || defaultExpiryValue());
+                      if (e.key === 'Escape') setEditingExpiry(false);
+                    }}
+                    autoFocus
+                  />
+                  <button onClick={() => setEditingExpiry(false)} className="text-slate-400">
+                    <Check size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${product.status === 'scaduto' || product.status === 'in_scadenza' ? 'text-amber-600' : 'text-slate-700'}`}>
+                    {formatDate(expiryDate)}
+                  </span>
+                  <button
+                    onClick={() => setEditingExpiry(true)}
+                    className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 transition-colors"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                </div>
+              )}
+            </div>
             <InfoRow icon={<Hash size={15} />} label="Lotto" value={product.lot} mono />
           </div>
         </div>

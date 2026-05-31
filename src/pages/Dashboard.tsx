@@ -1,5 +1,5 @@
 import { Package, AlertTriangle, TrendingDown, ChefHat, ShoppingCart, ArrowRight, Sparkles, Leaf } from 'lucide-react';
-import { PRODUCTS, RECENT_PURCHASES, RECIPES, CONSUMPTION_HISTORY, MONTHLY_IMPACT } from '../data/mockData';
+import { RECENT_PURCHASES, RECIPES, CONSUMPTION_HISTORY, MONTHLY_IMPACT } from '../data/mockData';
 import { StatCard } from '../components/StatCard';
 import { AlertBox } from '../components/AlertBox';
 import { ProductCard } from '../components/ProductCard';
@@ -10,31 +10,29 @@ interface DashboardProps {
   onNavigate: (page: PageName) => void;
   onNavigateToPantry: (filter: ProductLocation | 'all') => void;
   onProductClick: (product: Product) => void;
+  products: Product[];
 }
 
-export function Dashboard({ onNavigate, onNavigateToPantry, onProductClick }: DashboardProps) {
-  const total = PRODUCTS.length;
-  const expiring = PRODUCTS.filter(p => p.status === 'in_scadenza' || p.status === 'scaduto').length;
-  const lowStock = PRODUCTS.filter(p => p.status === 'quasi_finito').length;
-  const expired = PRODUCTS.filter(p => p.status === 'scaduto').length;
+export function Dashboard({ onNavigate, onNavigateToPantry, onProductClick, products }: DashboardProps) {
+  const total = products.length;
+  const expiring = products.filter(p => p.status === 'in_scadenza' || p.status === 'scaduto').length;
+  const lowStock = products.filter(p => p.status === 'quasi_finito').length;
+  const expired = products.filter(p => p.status === 'scaduto').length;
 
-  const frigoCount = PRODUCTS.filter(p => p.location === 'frigo').length;
-  const dispensaCount = PRODUCTS.filter(p => p.location === 'dispensa').length;
-  const freezerCount = PRODUCTS.filter(p => p.location === 'freezer').length;
+  const frigoCount = products.filter(p => p.location === 'frigo').length;
+  const dispensaCount = products.filter(p => p.location === 'dispensa').length;
+  const freezerCount = products.filter(p => p.location === 'freezer').length;
 
-  // Ricette realmente preparabili (tutti gli ingredienti disponibili)
   const readyRecipesCount = RECIPES.filter(
     r => r.availableIngredients === r.totalIngredients
   ).length;
 
-  // Prodotti urgenti: ordina per scadenza più vicina
-  const urgentProducts = PRODUCTS
+  const urgentProducts = products
     .filter(p => p.status !== 'scaduto')
     .sort((a, b) => daysUntilExpiry(a.expiryDate) - daysUntilExpiry(b.expiryDate))
     .slice(0, 3);
 
-  // Suggerimento dinamico basato sui prodotti che scadono prima
-  const mostUrgent = PRODUCTS
+  const mostUrgent = products
     .filter(p => p.status === 'in_scadenza' || p.status === 'quasi_finito')
     .sort((a, b) => daysUntilExpiry(a.expiryDate) - daysUntilExpiry(b.expiryDate));
 
@@ -44,7 +42,9 @@ export function Dashboard({ onNavigate, onNavigateToPantry, onProductClick }: Da
     : 'La tua dispensa è in ottimo stato. Continua così!';
 
   const lastPurchase = RECENT_PURCHASES[0];
-  const lastPurchaseProducts = PRODUCTS.filter(p => lastPurchase.products.includes(p.id)).slice(0, 4);
+  const lastPurchaseProducts = lastPurchase
+    ? products.filter(p => lastPurchase.products.includes(p.id)).slice(0, 4)
+    : [];
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Buongiorno' : hour < 18 ? 'Buon pomeriggio' : 'Buonasera';
@@ -229,7 +229,7 @@ export function Dashboard({ onNavigate, onNavigateToPantry, onProductClick }: Da
       </div>
 
       {/* Ultimi acquisti */}
-      <div>
+      {lastPurchase && <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Ultimo acquisto</h3>
           <span className="text-xs text-slate-400">
@@ -272,7 +272,7 @@ export function Dashboard({ onNavigate, onNavigateToPantry, onProductClick }: Da
             </button>
           </div>
         </div>
-      </div>
+      </div>}
 
       <div className="h-2" />
     </div>
