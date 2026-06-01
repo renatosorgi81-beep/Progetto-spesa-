@@ -45,10 +45,10 @@ function isAddressLine(line: string): boolean {
 function parseReceipt(text: string): ParsedItem[] {
   // Skip only lines that START with these (IVA 22% and totals are NOT product lines)
   const SKIP_START = [
-    'totale', 'subtotal', 'sub total', 'iva', 'sconto', 'resto',
-    'pagamento', 'contante', 'carta', 'grazie', 'arriveder',
+    'totale', 'subtotal', 'sub total', 'iva', 'sconto', 'resto', 'valore',
+    'pagamento', 'contante', 'grazie', 'arriveder',
     'di cui', 'operatore', 'data:', 'ora:', 'tel:', 'tel.:', 'telefono',
-    'importo', 'punti', 'nr. ', 'num.',
+    'importo', 'nr. ', 'num.',
   ];
   // Skip lines CONTAINING these exact phrases anywhere
   const SKIP_CONTAINS = [
@@ -94,6 +94,9 @@ function parseReceipt(text: string): ParsedItem[] {
 
     const pm = line.match(priceRe);
     if (!pm || pm.index === undefined) continue;
+
+    // Skip discount/coupon lines (negative prices like "-0,89")
+    if (line.slice(0, pm.index).trimEnd().endsWith('-')) continue;
 
     // Price on the product line = unit price (not total)
     let unitPrice = parseFloat(pm[1].replace(',', '.'));
@@ -151,7 +154,7 @@ function parseReceipt(text: string): ParsedItem[] {
       editName: formatted,
       editPrice: unitPrice.toFixed(2),
     });
-    if (items.length >= 30) break;
+    if (items.length >= 200) break;
   }
 
   return items;
