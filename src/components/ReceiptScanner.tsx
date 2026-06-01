@@ -9,9 +9,11 @@ interface ParsedItem {
   id: string;
   name: string;
   qty: number;
-  price: number;
+  price: number;     // prezzo cadauno
   selected: boolean;
   emoji: string;
+  editName: string;  // draft while editing
+  editPrice: string; // draft while editing
 }
 
 type FileKind = 'image' | 'pdf' | 'excel' | 'word' | 'text' | 'unsupported';
@@ -43,6 +45,8 @@ function parseReceipt(text: string): ParsedItem[] {
 
   const priceRe = /\s(\d{1,4}[.,]\d{2})\s*[ABCD]?\s*$/;
   const qtyRe = /^(\d+)\s*[Xx\*]\s+/;
+  // Matches an isolated price token inside the name (unit price before total)
+  const unitPriceRe = /\s(\d{1,4}[.,]\d{2})\s/;
   const items: ParsedItem[] = [];
   const seen = new Set<string>();
 
@@ -56,8 +60,8 @@ function parseReceipt(text: string): ParsedItem[] {
     const pm = line.match(priceRe);
     if (!pm) continue;
 
-    const price = parseFloat(pm[1].replace(',', '.'));
-    if (!price || price <= 0 || price > 300) continue;
+    const lineTotal = parseFloat(pm[1].replace(',', '.'));
+    if (!lineTotal || lineTotal <= 0 || lineTotal > 300) continue;
 
     let name = line.slice(0, line.lastIndexOf(pm[0])).trim();
     let qty = 1;
@@ -68,6 +72,21 @@ function parseReceipt(text: string): ParsedItem[] {
       name = name.slice(qm[0].length).trim();
     }
 
+    // Try to extract a unit price embedded in the remaining name
+    let unitPrice = lineTotal;
+    const upm = name.match(unitPriceRe);
+    if (upm && qty > 1) {
+      const candidate = parseFloat(upm[1].replace(',', '.'));
+      // Validate: candidate × qty ≈ lineTotal (±2 cents rounding)
+      if (Math.abs(candidate * qty - lineTotal) < 0.03) {
+        unitPrice = candidate;
+        name = (name.slice(0, name.indexOf(upm[0])) + name.slice(name.indexOf(upm[0]) + upm[0].length)).trim();
+      }
+    } else if (qty > 1) {
+      // No embedded price found but we have qty: compute from total
+      unitPrice = Math.round((lineTotal / qty) * 100) / 100;
+    }
+
     name = name.replace(/\s+/g, ' ').replace(/[^\w\s\-àáâãèéêëìíîïòóôùúûüçñÀÁÂÃÈÉÊËÌÍÎÏÒÓÔÙÚÛÜÇÑ]/g, '').trim();
     if (name.length < 3 || /^\d+$/.test(name)) continue;
 
@@ -76,7 +95,17 @@ function parseReceipt(text: string): ParsedItem[] {
     seen.add(key);
 
     const formatted = name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-    items.push({ id: String(items.length), name: formatted, qty, price, selected: true, emoji: guessEmoji(key) });
+    const priceStr = unitPrice.toFixed(2);
+    items.push({
+      id: String(items.length),
+      name: formatted,
+      qty,
+      price: unitPrice,
+      selected: true,
+      emoji: guessEmoji(key),
+      editName: formatted,
+      editPrice: priceStr,
+    });
     if (items.length >= 30) break;
   }
 
@@ -218,6 +247,29 @@ export function ReceiptScanner({ onAddProducts, onClose }: ReceiptScannerProps) 
   const [errorMsg, setErrorMsg] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
+  function startEdit(id: string) {
+    setEditingId(id);
+  }
+
+  function setEditField(id: string, field: 'editName' | 'editPrice', value: string) {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i));
+  }
+
+  function commitEdit(id: string) {
+    setItems(prev => prev.map(i => {
+      if (i.id !== id) return i;
+      const price = parseFloat(i.editPrice.replace(',', '.'));
+      const name = i.editName.trim() || i.name;
+      return {
+        ...i,
+        name,
+        price: isNaN(price) || price <= 0 ? i.price : Math.round(price * 100) / 100,
+        emoji: guessEmoji(name.toLowerCase()),
+      };
+    }));
+    setEditingId(null);
+  }
+
   async function processFile(file: File) {
     const kind = detectKind(file);
     setFileKind(kind);
@@ -283,11 +335,8 @@ export function ReceiptScanner({ onAddProducts, onClose }: ReceiptScannerProps) 
   }
 
   function toggle(id: string) {
+    if (editingId === id) return; // don't toggle while editing
     setItems(prev => prev.map(i => i.id === id ? { ...i, selected: !i.selected } : i));
-  }
-
-  function updateName(id: string, name: string) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, name, emoji: guessEmoji(name.toLowerCase()) } : i));
   }
 
   function confirm() {
@@ -446,42 +495,77 @@ export function ReceiptScanner({ onAddProducts, onClose }: ReceiptScannerProps) 
                 </div>
 
                 <div className="space-y-2">
-                  {items.map(item => (
-                    <div
-                      key={item.id}
-                      className={`bg-white rounded-2xl border shadow-sm p-3 flex items-center gap-3 transition-all ${
-                        item.selected ? 'border-slate-200' : 'border-slate-100 opacity-50'
-                      }`}
-                    >
-                      <button onClick={() => toggle(item.id)} className="flex-shrink-0">
-                        {item.selected
-                          ? <CheckCircle2 size={22} className="text-emerald-500" />
-                          : <Circle size={22} className="text-slate-300" />}
-                      </button>
-                      <span className="text-2xl flex-shrink-0">{item.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        {editingId === item.id ? (
-                          <input
-                            autoFocus
-                            className="w-full text-sm font-semibold border-b border-emerald-400 outline-none bg-transparent"
-                            value={item.name}
-                            onChange={e => updateName(item.id, e.target.value)}
-                            onBlur={() => setEditingId(null)}
-                            onKeyDown={e => e.key === 'Enter' && setEditingId(null)}
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold text-slate-800 truncate">{item.name}</p>
-                        )}
-                        <p className="text-xs text-slate-400">x{item.qty} · €{item.price.toFixed(2)}</p>
-                      </div>
-                      <button
-                        onClick={() => setEditingId(editingId === item.id ? null : item.id)}
-                        className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-colors flex-shrink-0"
+                  {items.map(item => {
+                    const isEditing = editingId === item.id;
+                    const total = (item.price * item.qty).toFixed(2);
+                    return (
+                      <div
+                        key={item.id}
+                        className={`bg-white rounded-2xl border shadow-sm transition-all ${
+                          item.selected ? 'border-slate-200' : 'border-slate-100 opacity-50'
+                        }`}
                       >
-                        <Pencil size={13} />
-                      </button>
-                    </div>
-                  ))}
+                        {/* Main row */}
+                        <div className="p-3 flex items-center gap-3">
+                          <button onClick={() => toggle(item.id)} className="flex-shrink-0">
+                            {item.selected
+                              ? <CheckCircle2 size={22} className="text-emerald-500" />
+                              : <Circle size={22} className="text-slate-300" />}
+                          </button>
+                          <span className="text-2xl flex-shrink-0">{item.emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-slate-800 truncate">{item.name}</p>
+                            <p className="text-xs text-slate-400">
+                              x{item.qty} · €{item.price.toFixed(2)}/cad
+                              {item.qty > 1 && <span className="ml-1 text-slate-300">tot €{total}</span>}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => isEditing ? commitEdit(item.id) : startEdit(item.id)}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${
+                              isEditing ? 'bg-emerald-500 text-white' : 'bg-slate-50 text-slate-400 hover:text-emerald-500'
+                            }`}
+                          >
+                            {isEditing ? <CheckCircle2 size={14} /> : <Pencil size={13} />}
+                          </button>
+                        </div>
+
+                        {/* Inline edit panel */}
+                        {isEditing && (
+                          <div className="px-3 pb-3 pt-0 space-y-2 border-t border-slate-100">
+                            <div>
+                              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Descrizione</label>
+                              <input
+                                autoFocus
+                                className="mt-0.5 w-full text-sm font-semibold border border-emerald-300 rounded-xl px-3 py-2 outline-none focus:border-emerald-500 bg-white"
+                                value={item.editName}
+                                onChange={e => setEditField(item.id, 'editName', e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && commitEdit(item.id)}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Prezzo cadauno (€)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="mt-0.5 w-full text-sm border border-emerald-300 rounded-xl px-3 py-2 outline-none focus:border-emerald-500 bg-white"
+                                value={item.editPrice}
+                                onChange={e => setEditField(item.id, 'editPrice', e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && commitEdit(item.id)}
+                              />
+                            </div>
+                            <button
+                              onClick={() => commitEdit(item.id)}
+                              className="w-full py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl"
+                            >
+                              Salva
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <button
