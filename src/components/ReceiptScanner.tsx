@@ -56,13 +56,11 @@ function parseReceipt(text: string): ParsedItem[] {
     'fidelity', 'cashback', 'spesa totale', 'risparmio', 'esercizio',
   ];
 
-  // Price at end of line, optionally followed by:
-  //   - IVA letter code (A B C D) used by Italian cash registers
-  //   - percentage like "22%" or "10%"
-  //   - explicit label "IVA 22%"
-  // KEY FIX: product lines like "PASTA  1,79 IVA 22%" were being skipped
-  // because "iva" was in a substring-SKIP — now "iva" is only in SKIP_START.
-  const priceRe = /(\d{1,4}[.,]\d{2})\s*(?:[A-D]|\d{1,2}%|iva\s*\d{0,2}%?)?\s*$/i;
+  // Matches the price at end of line in both Italian receipt layouts:
+  //   Layout A (IVA after price):  "PASTA  1,79 22%"  or  "PASTA  1,79 A"
+  //   Layout B (IVA before price): "PASTA  22%  3,57"  — IVA% consumed in optional prefix
+  // The optional prefix (?:iva\s+)?\d{1,2}\s*%\s+ strips "22%  " or "IVA 22%  " before price.
+  const priceRe = /(?:(?:iva\s+)?\d{1,2}\s*%\s+)?(\d{1,4}[.,]\d{2})\s*(?:[A-D]|\d{1,2}\s*%|iva\s*\d{0,2}\s*%?)?\s*$/i;
 
   // Qty prefix on same product line: "2 X PASTA 3,58"
   const qtyPrefixRe = /^(\d+)\s*[Xx\*]\s+/;
@@ -90,8 +88,8 @@ function parseReceipt(text: string): ParsedItem[] {
     if (SKIP_CONTAINS.some(k => lower.includes(k))) continue;
     if (isAddressLine(line)) continue;
     if (/^[\-\=\*\.\_\s]+$/.test(line)) continue;
-    // CAD detail lines are consumed by lookahead; skip any that weren't
-    if (cadIdentRe.test(lower)) continue;
+    // CAD detail lines start with "CAD"; skip any not consumed by lookahead
+    if (/^\s*cad\b/i.test(line)) continue;
 
     const pm = line.match(priceRe);
     if (!pm || pm.index === undefined) continue;
