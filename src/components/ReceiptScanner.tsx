@@ -34,60 +34,90 @@ function detectKind(file: File): FileKind {
 
 // ── Receipt parser ────────────────────────────────────────────────────────────
 
+function isAddressLine(line: string): boolean {
+  // Italian postal code at start (e.g. "90044-Strada..." or "90044 Palermo")
+  if (/^\d{5}[\s\-]/.test(line)) return true;
+  const lower = line.toLowerCase();
+  return ['strada statale', 'via ', 'viale ', 'piazza ', 'corso ', 'largo ',
+    'vicolo', 'autostrada', ' km ', 'km.', 's.s.', 'localita', 'loc.'].some(w => lower.includes(w));
+}
+
 function parseReceipt(text: string): ParsedItem[] {
   const SKIP = [
     'totale', 'tot.', 'subtotal', 'sub total', 'iva', 'sconto', 'resto',
     'pagamento', 'contante', 'carta', 'cassa', 'scontrino', 'fiscale',
-    'grazie', 'arriveder', 'data:', 'ora:', 'tel:', 'p.iva',
-    'codice fiscale', 'partita iva', 'operatore', 'punti', 'fidelity',
-    'cashback', 'cambio', 'spesa totale', 'risparmio',
+    'grazie', 'arriveder', 'data:', 'ora:', 'tel:', 'tel.:', 'telefono',
+    'p.iva', 'codice fiscale', 'partita iva', 'operatore', 'punti', 'fidelity',
+    'cashback', 'cambio', 'spesa totale', 'risparmio', 'esercizio',
   ];
 
+  // End-of-line price: e.g. "  1,79 A" or "  3,58"
   const priceRe = /\s(\d{1,4}[.,]\d{2})\s*[ABCD]?\s*$/;
-  const qtyRe = /^(\d+)\s*[Xx\*]\s+/;
-  // Matches an isolated price token inside the name (unit price before total)
-  const unitPriceRe = /\s(\d{1,4}[.,]\d{2})\s/;
+  // Qty prefix on product line: "2 X PASTA"
+  const qtyPrefixRe = /^(\d+)\s*[Xx\*]\s+/;
+  // CAD detail line: "2 CAD X 1,79  3,58 A" — appears on the line below a multi-qty product
+  const cadLineRe = /^(\d+)\s+cad\b/i;
+
+  const lines = text.split('\n').map(l => l.trim());
   const items: ParsedItem[] = [];
   const seen = new Set<string>();
 
-  for (const rawLine of text.split('\n')) {
-    const line = rawLine.trim();
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    i++;
+
     if (line.length < 4) continue;
     const lower = line.toLowerCase();
     if (SKIP.some(k => lower.includes(k))) continue;
+    if (isAddressLine(line)) continue;
     if (/^[\-\=\*\.\_\s]+$/.test(line)) continue;
+    // Skip lines that are pure CAD detail (they'll be consumed as look-ahead)
+    if (cadLineRe.test(line)) continue;
 
     const pm = line.match(priceRe);
     if (!pm) continue;
 
-    const lineTotal = parseFloat(pm[1].replace(',', '.'));
-    if (!lineTotal || lineTotal <= 0 || lineTotal > 300) continue;
+    // Price shown on the product line is the unit price by default
+    let unitPrice = parseFloat(pm[1].replace(',', '.'));
+    if (!unitPrice || unitPrice <= 0 || unitPrice > 300) continue;
 
     let name = line.slice(0, line.lastIndexOf(pm[0])).trim();
     let qty = 1;
 
-    const qm = name.match(qtyRe);
+    // Qty prefix on same line: "2 X PASTA 3,58" → qty=2, total=3.58
+    const qm = name.match(qtyPrefixRe);
     if (qm) {
       qty = Math.min(parseInt(qm[1]), 99);
       name = name.slice(qm[0].length).trim();
+      // In this format the line price IS the total; divide to get unit price
+      unitPrice = Math.round((unitPrice / qty) * 100) / 100;
     }
 
-    // Try to extract a unit price embedded in the remaining name
-    let unitPrice = lineTotal;
-    const upm = name.match(unitPriceRe);
-    if (upm && qty > 1) {
-      const candidate = parseFloat(upm[1].replace(',', '.'));
-      // Validate: candidate × qty ≈ lineTotal (±2 cents rounding)
-      if (Math.abs(candidate * qty - lineTotal) < 0.03) {
-        unitPrice = candidate;
-        name = (name.slice(0, name.indexOf(upm[0])) + name.slice(name.indexOf(upm[0]) + upm[0].length)).trim();
+    // Look ahead: next non-empty line might be a CAD detail line
+    let j = i;
+    while (j < lines.length && lines[j].trim().length === 0) j++;
+    if (j < lines.length) {
+      const next = lines[j].trim();
+      const cadMatch = next.match(cadLineRe);
+      if (cadMatch) {
+        const cadQty = parseInt(cadMatch[1]);
+        // Extract all prices from the CAD line; smallest is unit price
+        const cadPrices = [...next.matchAll(/(\d{1,4}[.,]\d{2})/g)]
+          .map(m => parseFloat(m[1].replace(',', '.')))
+          .filter(p => p > 0 && p <= 300);
+        if (cadPrices.length >= 1) {
+          unitPrice = Math.min(...cadPrices); // smallest = unit price
+          qty = cadQty;
+          i = j + 1; // consume the CAD line
+        }
       }
-    } else if (qty > 1) {
-      // No embedded price found but we have qty: compute from total
-      unitPrice = Math.round((lineTotal / qty) * 100) / 100;
     }
 
-    name = name.replace(/\s+/g, ' ').replace(/[^\w\s\-àáâãèéêëìíîïòóôùúûüçñÀÁÂÃÈÉÊËÌÍÎÏÒÓÔÙÚÛÜÇÑ]/g, '').trim();
+    name = name
+      .replace(/\s+/g, ' ')
+      .replace(/[^\w\s\-àáâãèéêëìíîïòóôùúûüçñÀÁÂÃÈÉÊËÌÍÎÏÒÓÔÙÚÛÜÇÑ]/g, '')
+      .trim();
     if (name.length < 3 || /^\d+$/.test(name)) continue;
 
     const key = name.toLowerCase();
@@ -95,7 +125,6 @@ function parseReceipt(text: string): ParsedItem[] {
     seen.add(key);
 
     const formatted = name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-    const priceStr = unitPrice.toFixed(2);
     items.push({
       id: String(items.length),
       name: formatted,
@@ -104,7 +133,7 @@ function parseReceipt(text: string): ParsedItem[] {
       selected: true,
       emoji: guessEmoji(key),
       editName: formatted,
-      editPrice: priceStr,
+      editPrice: unitPrice.toFixed(2),
     });
     if (items.length >= 30) break;
   }
