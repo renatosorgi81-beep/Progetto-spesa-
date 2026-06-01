@@ -70,7 +70,8 @@ function parseReceipt(text: string): ParsedItem[] {
   //   "CAD 17,50/kg pz. 1" → unit price 17,50, unit kg
   const cadIdentRe = /\bcad\b/i;
   const cadPriceRe = /(\d{1,4}[.,]\d{2})/;
-  const cadQtyRe = /pz\.?\s*(\d+)|(\d+)\s*pz\.?/i;
+  // "Pz. 3", "Pz.3", "Pz 3", "Pz3" — number always follows Pz on this receipt format
+  const cadQtyRe = /pz\.?\s*(\d+)/i;
   const cadKgRe = /\/kg\b/i;
 
   const lines = text.split('\n').map(l => l.trim());
@@ -123,8 +124,7 @@ function parseReceipt(text: string): ParsedItem[] {
         unit = cadKgRe.test(next) ? 'kg' : 'pz';
       }
       if (qtyM) {
-        const qtyStr = qtyM[1] || qtyM[2] || '1';
-        qty = Math.min(parseInt(qtyStr) || 1, 99);
+        qty = Math.min(parseInt(qtyM[1]) || 1, 99);
       }
       i = j + 1; // consume the CAD line
     }
